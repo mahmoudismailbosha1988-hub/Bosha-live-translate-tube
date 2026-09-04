@@ -1,12 +1,28 @@
 package com.arabicvideotranslator.audio
 
-class AudioCaptureService {
+import android.app.Service
+import android.content.Intent
+import android.os.IBinder
 
-    fun startCapture() {
-        // سيتم تشغيل التقاط صوت الفيديو هنا لاحقًا
+class AudioCaptureService : Service() {
+
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
+
+        // سيتم إضافة التقاط صوت الفيديو هنا لاحقًا
+
+        return START_NOT_STICKY
     }
 
-    fun stopCapture() {
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
+
+    override fun onDestroy() {
         // سيتم إيقاف التقاط الصوت هنا لاحقًا
+        super.onDestroy()
     }
 }
