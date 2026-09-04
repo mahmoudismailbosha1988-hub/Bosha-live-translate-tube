@@ -15,7 +15,9 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-
+kotlinOptions {
+    jvmTarget = "17"
+}
     buildFeatures {
         compose = true
     }
