@@ -17,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import com.arabicvideotranslator.audio.AudioCaptureService
 
 class MainActivity : ComponentActivity() {
 
@@ -38,30 +40,69 @@ class MainActivity : ComponentActivity() {
                     requestMediaProjection()
                 },
                 onStopTranslation = {
-                    // سيتم ربط إيقاف الترجمة هنا لاحقًا
+                    stopAudioCapture()
                 }
             )
         }
     }
 
     private fun requestMediaProjection() {
-        val captureIntent = mediaProjectionManager.createScreenCaptureIntent()
-        startActivityForResult(captureIntent, REQUEST_MEDIA_PROJECTION)
+        val captureIntent =
+            mediaProjectionManager.createScreenCaptureIntent()
+
+        startActivityForResult(
+            captureIntent,
+            REQUEST_MEDIA_PROJECTION
+        )
     }
 
-    @Deprecated("يُستخدم حاليًا لاستلام نتيجة إذن MediaProjection")
+    @Deprecated("Used to receive MediaProjection permission result")
     override fun onActivityResult(
         requestCode: Int,
         resultCode: Int,
         data: Intent?
     ) {
-        super.onActivityResult(requestCode, resultCode, data)
+        super.onActivityResult(
+            requestCode,
+            resultCode,
+            data
+        )
 
-        if (requestCode == REQUEST_MEDIA_PROJECTION) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                // سيتم تمرير إذن التقاط الصوت إلى الخدمة في الخطوة التالية
-            }
+        if (
+            requestCode == REQUEST_MEDIA_PROJECTION &&
+            resultCode == Activity.RESULT_OK &&
+            data != null
+        ) {
+            val serviceIntent =
+                Intent(
+                    this,
+                    AudioCaptureService::class.java
+                ).apply {
+                    putExtra(
+                        AudioCaptureService.EXTRA_RESULT_CODE,
+                        resultCode
+                    )
+                    putExtra(
+                        AudioCaptureService.EXTRA_RESULT_DATA,
+                        data
+                    )
+                }
+
+            ContextCompat.startForegroundService(
+                this,
+                serviceIntent
+            )
         }
+    }
+
+    private fun stopAudioCapture() {
+        val serviceIntent =
+            Intent(
+                this,
+                AudioCaptureService::class.java
+            )
+
+        stopService(serviceIntent)
     }
 }
 
