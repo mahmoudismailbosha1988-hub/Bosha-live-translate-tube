@@ -6,7 +6,9 @@ import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.arabicvideotranslator.audio.AudioCaptureService
@@ -62,11 +66,7 @@ class MainActivity : ComponentActivity() {
         resultCode: Int,
         data: Intent?
     ) {
-        super.onActivityResult(
-            requestCode,
-            resultCode,
-            data
-        )
+        super.onActivityResult(requestCode, resultCode, data)
 
         if (
             requestCode == REQUEST_MEDIA_PROJECTION &&
@@ -74,10 +74,7 @@ class MainActivity : ComponentActivity() {
             data != null
         ) {
             val serviceIntent =
-                Intent(
-                    this,
-                    AudioCaptureService::class.java
-                ).apply {
+                Intent(this, AudioCaptureService::class.java).apply {
                     putExtra(
                         AudioCaptureService.EXTRA_RESULT_CODE,
                         resultCode
@@ -97,10 +94,7 @@ class MainActivity : ComponentActivity() {
 
     private fun stopAudioCapture() {
         val serviceIntent =
-            Intent(
-                this,
-                AudioCaptureService::class.java
-            )
+            Intent(this, AudioCaptureService::class.java)
 
         stopService(serviceIntent)
     }
@@ -115,48 +109,60 @@ fun ArabicVideoTranslatorApp(
         mutableStateOf(false)
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
 
-        Text(
-            text = "Bosha Live Translate Tube"
+        Image(
+            painter = painterResource(
+                id = com.arabicvideotranslator.R.drawable.amal
+            ),
+            contentDescription = "Amal",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
 
-        Spacer(
-            modifier = Modifier.height(24.dp)
-        )
-
-        Button(
-            onClick = {
-                isTranslating = true
-                onStartTranslation()
-            }
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+
             Text(
-                text = if (isTranslating) {
-                    "الترجمة تعمل"
-                } else {
-                    "بدء الترجمة"
+                text = "Bosha Live Translate Tube"
+            )
+
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
+
+            Button(
+                onClick = {
+                    isTranslating = true
+                    onStartTranslation()
                 }
-            )
-        }
-
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
-
-        Button(
-            onClick = {
-                isTranslating = false
-                onStopTranslation()
+            ) {
+                Text(
+                    text = if (isTranslating) {
+                        "الترجمة تعمل"
+                    } else {
+                        "بدء الترجمة"
+                    }
+                )
             }
-        ) {
-            Text(
-                text = "إيقاف الترجمة"
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
             )
+
+            Button(
+                onClick = {
+                    isTranslating = false
+                    onStopTranslation()
+                }
+            ) {
+                Text("إيقاف الترجمة")
+            }
         }
     }
 }
