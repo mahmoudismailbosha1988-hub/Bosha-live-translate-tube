@@ -2,11 +2,19 @@ package com.arabicvideotranslator.audio
 
 class AudioCaptureManager {
 
+    private var isCapturing = false
+
     fun start() {
-        // سيتم إضافة التقاط صوت الفيديو هنا لاحقًا
+        isCapturing = true
+        // سيتم ربط التقاط صوت الفيديو هنا لاحقًا
     }
 
     fun stop() {
-        // سيتم إضافة إيقاف التقاط الصوت هنا لاحقًا
+        isCapturing = false
+        // سيتم إيقاف التقاط الصوت هنا لاحقًا
+    }
+
+    fun isRunning(): Boolean {
+        return isCapturing
     }
 }
