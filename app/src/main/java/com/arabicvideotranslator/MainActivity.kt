@@ -115,7 +115,7 @@ fun ArabicVideoTranslatorApp(
 
         Image(
             painter = painterResource(
-                id = com.arabicvideotranslator.R.drawable.amal
+                id = com.arabicvideotranslator.R.drawable.bosha_background
             ),
             contentDescription = "Amal",
             modifier = Modifier.fillMaxSize(),
