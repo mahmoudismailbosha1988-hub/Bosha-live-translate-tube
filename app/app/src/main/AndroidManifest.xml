@@ -3,10 +3,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <application
         android:allowBackup="true"
-        android:label="Arabic Video Translator"
+        android:label="Bosha Live Translate Tube"
         android:supportsRtl="true"
         android:theme="@style/Theme.ArabicVideoTranslator">
 
@@ -20,6 +23,11 @@
             </intent-filter>
 
         </activity>
+
+        <service
+            android:name=".audio.AudioCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
 
     </application>
 
