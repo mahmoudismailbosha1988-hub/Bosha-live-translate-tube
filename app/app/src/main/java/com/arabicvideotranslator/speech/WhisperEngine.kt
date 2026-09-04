@@ -1,17 +1,20 @@
-package com.arabicvideotranslator.speech
+package com.arabicvideotranslator.audio
 
-class WhisperEngine {
+class AudioCaptureManager {
 
-    fun initialize() {
-        // سيتم تحميل نموذج Whisper هنا لاحقًا
+    private var isCapturing = false
+
+    fun start() {
+        isCapturing = true
+        // سيتم ربط التقاط صوت الفيديو هنا لاحقًا
     }
 
-    fun transcribe(audioData: ShortArray): String {
-        // سيتم تحويل الصوت إلى نص هنا لاحقًا
-        return ""
+    fun stop() {
+        isCapturing = false
+        // سيتم إيقاف التقاط الصوت هنا لاحقًا
     }
 
-    fun release() {
-        // سيتم تحرير موارد Whisper هنا لاحقًا
+    fun isRunning(): Boolean {
+        return isCapturing
     }
 }
