@@ -7,4 +7,6 @@ interface TranslationEngine {
         sourceLanguage: String = "en",
         targetLanguage: String = "ar"
     ): String
+
+    fun isAvailable(): Boolean
 }
