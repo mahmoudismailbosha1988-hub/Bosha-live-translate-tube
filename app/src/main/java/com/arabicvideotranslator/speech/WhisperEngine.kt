@@ -6,21 +6,19 @@ class WhisperEngine {
 
     fun initialize() {
         initialized = true
-        // سيتم تحميل نموذج Whisper هنا لاحقًا
     }
 
     fun transcribe(audioData: ShortArray): String {
-        if (!initialized) {
+        if (!initialized || audioData.isEmpty()) {
             return ""
         }
 
-        // سيتم تحويل الصوت إلى نص إنجليزي هنا لاحقًا
+        // سيتم ربط نموذج التعرف الصوتي الفعلي هنا
         return ""
     }
 
     fun release() {
         initialized = false
-        // سيتم تحرير موارد Whisper هنا لاحقًا
     }
 
     fun isReady(): Boolean {
