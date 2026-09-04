@@ -18,3 +18,6 @@ dependencyResolutionManagement {
 rootProject.name = "ArabicVideoTranslator"
 
 include(":app")
+include(":whisperlib")
+
+project(":whisperlib").projectDir = file("whisperlib")
