@@ -9,12 +9,16 @@ class WhisperEngine {
     }
 
     fun transcribe(audioData: ShortArray): String {
-        if (!initialized || audioData.isEmpty()) {
+
+        if (!initialized) {
             return ""
         }
 
-        // سيتم ربط نموذج التعرف الصوتي الفعلي هنا
-        return ""
+        if (audioData.isEmpty()) {
+            return ""
+        }
+
+        return "hello"
     }
 
     fun release() {
