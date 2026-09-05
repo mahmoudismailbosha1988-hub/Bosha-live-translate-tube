@@ -8,7 +8,6 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-
     repositories {
         google()
         mavenCentral()
@@ -16,8 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ArabicVideoTranslator"
-
 include(":app")
-include(":whisperlib")
-
-project(":whisperlib").projectDir = file("whisperlib")
