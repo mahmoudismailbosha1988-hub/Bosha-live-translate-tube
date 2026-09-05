@@ -18,7 +18,15 @@ class WhisperEngine {
             return ""
         }
 
-        return "hello"
+        val averageLevel =
+            audioData.map { kotlin.math.abs(it.toInt()) }
+                .average()
+
+        return if (averageLevel > 500) {
+            "Speech detected"
+        } else {
+            ""
+        }
     }
 
     fun release() {
