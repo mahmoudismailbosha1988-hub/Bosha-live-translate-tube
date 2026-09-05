@@ -1,168 +1,138 @@
 package com.arabicvideotranslator
 
-import android.app.Activity
+import android.Manifest
 import android.content.Intent
-import android.media.projection.MediaProjectionManager
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
+import android.provider.Settings
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.arabicvideotranslator.audio.AudioCaptureService
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
-    private lateinit var mediaProjectionManager: MediaProjectionManager
+    private lateinit var btnStartOverlay: Button
+    private lateinit var tvStatus: TextView
 
     companion object {
-        private const val REQUEST_MEDIA_PROJECTION = 1001
+        private const val REQUEST_CODE_PERMISSIONS = 1001
+        private const val REQUEST_CODE_OVERLAY = 1002
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        mediaProjectionManager =
-            getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        // ربط العناصر
+        btnStartOverlay = findViewById(R.id.btnStartOverlay)
+        tvStatus = findViewById(R.id.tvStatus)
 
-        setContent {
-            ArabicVideoTranslatorApp(
-                onStartTranslation = {
-                    requestMediaProjection()
-                },
-                onStopTranslation = {
-                    stopAudioCapture()
-                }
+        btnStartOverlay.setOnClickListener {
+            if (checkAllPermissions()) {
+                startOverlayService()
+            } else {
+                requestAllPermissions()
+            }
+        }
+
+        updateStatus()
+    }
+
+    private fun updateStatus() {
+        val hasOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+        val hasAudio = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
+        tvStatus.text = when {
+            !hasOverlay -> "⚠️ يجب منح إذن الظهور فوق التطبيقات"
+            !hasAudio -> "⚠️ يجب منح إذن الميكروفون"
+            else -> "✅ جاهز - اضغط للبدء"
+        }
+
+        btnStartOverlay.isEnabled = hasOverlay && hasAudio
+    }
+
+    private fun checkAllPermissions(): Boolean {
+        val hasAudio = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val hasOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+
+        return hasAudio && hasOverlay
+    }
+
+    private fun requestAllPermissions() {
+        val permissions = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissions.add(Manifest.permission.RECORD_AUDIO)
+        }
+
+        if (permissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissions.toTypedArray(), REQUEST_CODE_PERMISSIONS)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
             )
+            startActivityForResult(intent, REQUEST_CODE_OVERLAY)
         }
     }
 
-    private fun requestMediaProjection() {
-        val captureIntent =
-            mediaProjectionManager.createScreenCaptureIntent()
-
-        startActivityForResult(
-            captureIntent,
-            REQUEST_MEDIA_PROJECTION
-        )
+    private fun startOverlayService() {
+        val intent = Intent(this, OverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+        Toast.makeText(this, "تم تشغيل الترجمة! 🎉", Toast.LENGTH_SHORT).show()
+        
+        // تصغير التطبيق ليرى المستخدم الفقاعة
+        moveTaskToBack(true)
     }
 
-    @Deprecated("Used to receive MediaProjection permission result")
-    override fun onActivityResult(
+    override fun onResume() {
+        super.onResume()
+        updateStatus()
+    }
+
+    override fun onRequestPermissionsResult(
         requestCode: Int,
-        resultCode: Int,
-        data: Intent?
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (
-            requestCode == REQUEST_MEDIA_PROJECTION &&
-            resultCode == Activity.RESULT_OK &&
-            data != null
-        ) {
-            val serviceIntent =
-                Intent(this, AudioCaptureService::class.java).apply {
-                    putExtra(
-                        AudioCaptureService.EXTRA_RESULT_CODE,
-                        resultCode
-                    )
-                    putExtra(
-                        AudioCaptureService.EXTRA_RESULT_DATA,
-                        data
-                    )
-                }
-
-            ContextCompat.startForegroundService(
-                this,
-                serviceIntent
-            )
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            updateStatus()
         }
     }
 
-    private fun stopAudioCapture() {
-        val serviceIntent =
-            Intent(this, AudioCaptureService::class.java)
-
-        stopService(serviceIntent)
-    }
-}
-
-@Composable
-fun ArabicVideoTranslatorApp(
-    onStartTranslation: () -> Unit,
-    onStopTranslation: () -> Unit
-) {
-    var isTranslating by remember {
-        mutableStateOf(false)
-    }
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-
-        Image(
-            painter = painterResource(
-                id = com.arabicvideotranslator.R.drawable.bosha_background
-            ),
-            contentDescription = "Amal",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            Text(
-                text = "Bosha Live Translate Tube"
-            )
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-            Button(
-                onClick = {
-                    isTranslating = true
-                    onStartTranslation()
-                }
-            ) {
-                Text(
-                    text = if (isTranslating) {
-                        "الترجمة تعمل"
-                    } else {
-                        "بدء الترجمة"
-                    }
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            Button(
-                onClick = {
-                    isTranslating = false
-                    onStopTranslation()
-                }
-            ) {
-                Text("إيقاف الترجمة")
-            }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_OVERLAY) {
+            updateStatus()
+            Toast.makeText(this, "تم منح الإذن! اضغط للبدء", Toast.LENGTH_SHORT).show()
         }
     }
 }
