@@ -16,6 +16,7 @@ import android.os.Build
 import android.os.IBinder
 import com.arabicvideotranslator.AppConstants
 import com.arabicvideotranslator.OverlayService
+import com.arabicvideotranslator.PipelineListener
 import com.arabicvideotranslator.TranslationPipeline
 
 class AudioCaptureService : Service() {
@@ -137,7 +138,7 @@ class AudioCaptureService : Service() {
 
         // إنشاء خط أنابيب الترجمة
         translationPipeline = TranslationPipeline(this, audioCaptureManager!!)
-        translationPipeline?.setListener(object : com.arabicvideotranslator.PipelineListener {
+        translationPipeline?.setListener(object : PipelineListener {
             override fun onTranslationReady(translatedText: String) {
                 // إرسال الترجمة إلى Overlay
                 sendTranslationToOverlay(translatedText)
