@@ -14,6 +14,10 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
+import com.arabicvideotranslator.AppConstants
+import com.arabicvideotranslator.OverlayService
+import com.arabicvideotranslator.PipelineListener
+import com.arabicvideotranslator.TranslationPipeline
 
 class AudioCaptureService : Service() {
 
@@ -29,6 +33,8 @@ class AudioCaptureService : Service() {
     private var audioRecord: AudioRecord? = null
     private var captureThread: Thread? = null
     private var isCapturing = false
+    private var audioCaptureManager: AudioCaptureManager? = null
+    private var translationPipeline: TranslationPipeline? = null
 
     override fun onStartCommand(
         intent: Intent?,
@@ -98,7 +104,7 @@ class AudioCaptureService : Service() {
                 .setEncoding(
                     AudioFormat.ENCODING_PCM_16BIT
                 )
-                .setSampleRate(16000)
+                .setSampleRate(AppConstants.SAMPLE_RATE)
                 .setChannelMask(
                     AudioFormat.CHANNEL_IN_MONO
                 )
@@ -106,7 +112,7 @@ class AudioCaptureService : Service() {
 
         val bufferSize =
             AudioRecord.getMinBufferSize(
-                16000,
+                AppConstants.SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT
             )
@@ -125,24 +131,47 @@ class AudioCaptureService : Service() {
         audioRecord?.startRecording()
         isCapturing = true
 
+        // إنشاء مدير التقاط الصوت
+        audioCaptureManager = AudioCaptureManager()
+        audioRecord?.let { audioCaptureManager?.initializeAudioRecord(it) }
+
+        // إنشاء خط أنابيب الترجمة
+        translationPipeline = TranslationPipeline(this, audioCaptureManager!!)
+        translationPipeline?.setListener(object : PipelineListener {
+            override fun onTranslationReady(translatedText: String) {
+                // إرسال الترجمة إلى Overlay
+                sendTranslationToOverlay(translatedText)
+            }
+
+            override fun onError(error: String) {
+                // التعامل مع الأخطاء
+            }
+        })
+
+        translationPipeline?.startProcessing()
+
         captureThread = Thread {
-            val buffer = ShortArray(1600)
-
             while (isCapturing) {
-                val read =
-                    audioRecord?.read(
-                        buffer,
-                        0,
-                        buffer.size
-                    ) ?: 0
-
-                if (read > 0) {
-                    // سيتم إرسال الصوت إلى Whisper في الخطوة التالية
+                try {
+                    Thread.sleep(100)
+                } catch (e: InterruptedException) {
+                    break
                 }
             }
         }
 
         captureThread?.start()
+    }
+
+    private fun sendTranslationToOverlay(translatedText: String) {
+        // إرسال الترجمة إلى خدمة Overlay
+        val intent = Intent(this, OverlayService::class.java)
+        intent.putExtra("translation", translatedText)
+        try {
+            startService(intent)
+        } catch (e: Exception) {
+            // التعامل مع الخطأ
+        }
     }
 
     private fun createNotificationChannel() {
@@ -174,7 +203,7 @@ class AudioCaptureService : Service() {
                     "Bosha Live Translate Tube"
                 )
                 .setContentText(
-                    "جاري التقاط صوت الفيديو"
+                    "جاري الترجمة الحية"
                 )
                 .setSmallIcon(
                     android.R.drawable.ic_btn_speak_now
@@ -186,7 +215,7 @@ class AudioCaptureService : Service() {
                     "Bosha Live Translate Tube"
                 )
                 .setContentText(
-                    "جاري التقاط صوت الفيديو"
+                    "جاري الترجمة الحية"
                 )
                 .setSmallIcon(
                     android.R.drawable.ic_btn_speak_now
@@ -197,6 +226,9 @@ class AudioCaptureService : Service() {
 
     override fun onDestroy() {
         isCapturing = false
+
+        translationPipeline?.release()
+        translationPipeline = null
 
         captureThread?.interrupt()
         captureThread = null

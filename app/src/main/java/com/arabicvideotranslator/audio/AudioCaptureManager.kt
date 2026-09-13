@@ -1,20 +1,32 @@
 package com.arabicvideotranslator.audio
 
+import android.media.AudioRecord
+import com.arabicvideotranslator.AppConstants
+
 class AudioCaptureManager {
 
-    private var isCapturing = false
+    private var audioRecord: AudioRecord? = null
 
-    fun start() {
-        isCapturing = true
-        // سيتم ربط التقاط صوت الفيديو هنا لاحقًا
+    fun initializeAudioRecord(audioRecord: AudioRecord) {
+        this.audioRecord = audioRecord
     }
 
-    fun stop() {
-        isCapturing = false
-        // سيتم إيقاف التقاط الصوت هنا لاحقًا
+    fun captureAudio(): ShortArray {
+        val audioRecord = this.audioRecord ?: return ShortArray(0)
+
+        val buffer = ShortArray(AppConstants.AUDIO_BUFFER_SIZE)
+        val readSize = audioRecord.read(buffer, 0, buffer.size)
+
+        return if (readSize > 0) {
+            buffer.sliceArray(0 until readSize)
+        } else {
+            ShortArray(0)
+        }
     }
 
-    fun isRunning(): Boolean {
-        return isCapturing
+    fun releaseAudioRecord() {
+        audioRecord?.stop()
+        audioRecord?.release()
+        audioRecord = null
     }
 }
