@@ -1,6 +1,6 @@
 package com.arabicvideotranslator.translation
 
-class ArabicTranslator : TranslationEngine {
+class ArabicTranslator {
 
     private val dictionary = mapOf(
         "hello" to "مرحبا",
@@ -12,7 +12,7 @@ class ArabicTranslator : TranslationEngine {
         "no" to "لا"
     )
 
-    override suspend fun translate(
+    suspend fun translate(
         text: String,
         sourceLanguage: String,
         targetLanguage: String
@@ -22,13 +22,10 @@ class ArabicTranslator : TranslationEngine {
             return ""
         }
 
-        val result =
-            dictionary[text.lowercase()]
-
-        return result ?: text
+        return dictionary[text.lowercase()] ?: text
     }
 
-    override fun isAvailable(): Boolean {
+    fun isAvailable(): Boolean {
         return true
     }
 }
